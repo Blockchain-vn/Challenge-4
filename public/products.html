@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: #4e73df;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: white;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 600;
+            padding: 15px 20px;
+        }
+
+        .btn-primary {
+            background-color: #4e73df;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5fc8;
+        }
+
+        .btn-danger {
+            background-color: #e74a3b;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #d52a1a;
+        }
+
+        .btn-success {
+            background-color: #1cc88a;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #17a673;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: #5a5c69;
+        }
+
+        .alert {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .product-actions {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-box-open me-2"></i>Quản lý sản phẩm
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-boxes me-1"></i>Sản phẩm</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="user-info"><i class="fas fa-user me-1"></i>Tài khoản</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-1"></i>Đăng xuất</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Alerts -->
+        <div class="alert alert-danger" id="error-message" role="alert"></div>
+        <div class="alert alert-success" id="success-message" role="alert"></div>
+
+        <!-- Products Card -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="m-0">Danh sách sản phẩm</h5>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus me-1"></i>Thêm sản phẩm
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Slug</th>
+                                <th>Số lượng</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-products" class="text-center py-4 d-none">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Chưa có sản phẩm nào. Hãy thêm sản phẩm mới!</p>
+                </div>
+                <div id="loading-products" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm sản phẩm mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-product-form">
+                        <div class="mb-3">
+                            <label for="product-name" class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-slug" class="form-label">Slug</label>
+                            <input type="text" class="form-control" id="product-slug" required>
+                            <div class="form-text">Slug là định danh duy nhất cho sản phẩm, chỉ chứa chữ thường, số và dấu gạch ngang.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-quantity" class="form-label">Số lượng</label>
+                            <input type="number" class="form-control" id="product-quantity" min="0" value="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="save-product-btn">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa sản phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-product-form">
+                        <input type="hidden" id="edit-product-id">
+                        <div class="mb-3">
+                            <label for="edit-product-name" class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" id="edit-product-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-product-slug" class="form-label">Slug</label>
+                            <input type="text" class="form-control" id="edit-product-slug" required>
+                            <div class="form-text">Slug là định danh duy nhất cho sản phẩm, chỉ chứa chữ thường, số và dấu gạch ngang.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-product-quantity" class="form-label">Số lượng</label>
+                            <input type="number" class="form-control" id="edit-product-quantity" min="0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="update-product-btn">Cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận xóa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                    <p class="text-danger">Hành động này không thể hoàn tác.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/index.html';
+                return;
+            }
+
+            // Display user info
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                document.getElementById('user-info').textContent = user.email;
+            }
+
+            // Load products
+            loadProducts();
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/index.html';
+        });
+
+        // Load products function
+        async function loadProducts() {
+            const token = localStorage.getItem('token');
+            const tableBody = document.getElementById('products-table-body');
+            const loadingElement = document.getElementById('loading-products');
+            const noProductsElement = document.getElementById('no-products');
+
+            try {
+                const response = await fetch('http://localhost:3002/api/product', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+                
+                // Hide loading indicator
+                loadingElement.classList.add('d-none');
+                
+                if (!response.ok) {
+                    showMessage('error-message', result.message || 'Đã xảy ra lỗi khi tải sản phẩm');
+                    return;
+                }
+
+                const products = result.data;
+                
+                if (products.length === 0) {
+                    noProductsElement.classList.remove('d-none');
+                    return;
+                }
+
+                // Clear table
+                tableBody.innerHTML = '';
+                
+                // Add products to table
+                products.forEach(product => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    const createdDate = new Date(product.created_at);
+                    const formattedDate = createdDate.toLocaleDateString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    row.innerHTML = `
+                        <td>${product.id.substring(0, 8)}...</td>
+                        <td>${product.name}</td>
+                        <td>${product.slug}</td>
+                        <td>${product.quantity}</td>
+                        <td>${formattedDate}</td>
+                        <td class="product-actions">
+                            <button class="btn btn-sm btn-primary edit-btn" data-id="${product.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${product.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                addButtonEventListeners();
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                loadingElement.classList.add('d-none');
+                showMessage('error-message', 'Đã xảy ra lỗi khi tải sản phẩm. Vui lòng thử lại sau.');
+            }
+        }
+
+        // Add event listeners to edit and delete buttons
+        function addButtonEventListeners() {
+            // Edit buttons
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-id');
+                    openEditModal(productId);
+                });
+            });
+            
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-id');
+                    openDeleteModal(productId);
+                });
+            });
+        }
+
+        // Open edit modal and load product data
+        async function openEditModal(productId) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`http://localhost:3002/api/product/${productId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    showMessage('error-message', result.message || 'Đã xảy ra lỗi khi tải thông tin sản phẩm');
+                    return;
+                }
+                
+                const product = result.data;
+                
+                // Fill form fields
+                document.getElementById('edit-product-id').value = product.id;
+                document.getElementById('edit-product-name').value = product.name;
+                document.getElementById('edit-product-slug').value = product.slug;
+                document.getElementById('edit-product-quantity').value = product.quantity;
+                
+                // Show modal
+                const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+                editModal.show();
+                
+            } catch (error) {
+                console.error('Error loading product details:', error);
+                showMessage('error-message', 'Đã xảy ra lỗi khi tải thông tin sản phẩm. Vui lòng thử lại sau.');
+            }
+        }
+
+        // Open delete confirmation modal
+        function openDeleteModal(productId) {
+            // Set product ID for delete confirmation
+            document.getElementById('confirm-delete-btn').setAttribute('data-id', productId);
+            
+            // Show modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
+            deleteModal.show();
+        }
+
+        // Add new product
+        document.getElementById('save-product-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            const name = document.getElementById('product-name').value;
+            const slug = document.getElementById('product-slug').value;
+            const quantity = document.getElementById('product-quantity').value;
+            
+            if (!name || !slug) {
+                showMessage('error-message', 'Vui lòng nhập đầy đủ thông tin sản phẩm');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3002/api/product', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name,
+                        slug,
+                        quantity: parseInt(quantity)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    showMessage('error-message', result.message || 'Đã xảy ra lỗi khi thêm sản phẩm');
+                    return;
+                }
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                modal.hide();
+                
+                // Clear form
+                document.getElementById('add-product-form').reset();
+                
+                // Show success message
+                showMessage('success-message', result.message || 'Thêm sản phẩm thành công');
+                
+                // Reload products
+                loadProducts();
+                
+            } catch (error) {
+                console.error('Error adding product:', error);
+                showMessage('error-message', 'Đã xảy ra lỗi khi thêm sản phẩm. Vui lòng thử lại sau.');
+            }
+        });
+
+        // Update product
+        document.getElementById('update-product-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            const productId = document.getElementById('edit-product-id').value;
+            const name = document.getElementById('edit-product-name').value;
+            const slug = document.getElementById('edit-product-slug').value;
+            const quantity = document.getElementById('edit-product-quantity').value;
+            
+            if (!name || !slug) {
+                showMessage('error-message', 'Vui lòng nhập đầy đủ thông tin sản phẩm');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:3002/api/product/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name,
+                        slug,
+                        quantity: parseInt(quantity)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    showMessage('error-message', result.message || 'Đã xảy ra lỗi khi cập nhật sản phẩm');
+                    return;
+                }
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                modal.hide();
+                
+                // Show success message
+                showMessage('success-message', result.message || 'Cập nhật sản phẩm thành công');
+                
+                // Reload products
+                loadProducts();
+                
+            } catch (error) {
+                console.error('Error updating product:', error);
+                showMessage('error-message', 'Đã xảy ra lỗi khi cập nhật sản phẩm. Vui lòng thử lại sau.');
+            }
+        });
+
+        // Delete product
+        document.getElementById('confirm-delete-btn').addEventListener('click', async function() {
+            const token = localStorage.getItem('token');
+            const productId = this.getAttribute('data-id');
+            
+            try {
+                const response = await fetch(`http://localhost:3002/api/product/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    showMessage('error-message', result.message || 'Đã xảy ra lỗi khi xóa sản phẩm');
+                    return;
+                }
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteProductModal'));
+                modal.hide();
+                
+                // Show success message
+                showMessage('success-message', result.message || 'Xóa sản phẩm thành công');
+                
+                // Reload products
+                loadProducts();
+                
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showMessage('error-message', 'Đã xảy ra lỗi khi xóa sản phẩm. Vui lòng thử lại sau.');
+            }
+        });
+
+        // Helper function to show messages
+        function showMessage(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            // Hide other message type
+            const otherElementId = elementId === 'error-message' ? 'success-message' : 'error-message';
+            document.getElementById(otherElementId).style.display = 'none';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // Auto-generate slug from product name
+        document.getElementById('product-name').addEventListener('input', function() {
+            const name = this.value;
+            const slug = name
+                .toLowerCase()
+                .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+                .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+                .replace(/[ìíịỉĩ]/g, 'i')
+                .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+                .replace(/[ùúụủũưừứựửữ]/g, 'u')
+                .replace(/[ỳýỵỷỹ]/g, 'y')
+                .replace(/đ/g, 'd')
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+            
+            document.getElementById('product-slug').value = slug;
+        });
+
+        // Auto-generate slug from product name in edit form
+        document.getElementById('edit-product-name').addEventListener('input', function() {
+            const name = this.value;
+            const slug = name
+                .toLowerCase()
+                .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+                .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+                .replace(/[ìíịỉĩ]/g, 'i')
+                .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+                .replace(/[ùúụủũưừứựửữ]/g, 'u')
+                .replace(/[ỳýỵỷỹ]/g, 'y')
+                .replace(/đ/g, 'd')
+                .replace(/\s+/g, '-')
+                .replace(/[^\w\-]+/g, '')
+                .replace(/\-\-+/g, '-')
+                .replace(/^-+/, '')
+                .replace(/-+$/, '');
+            
+            document.getElementById('edit-product-slug').value = slug;
+        });
+    </script>
+</body>
+
+</html>
